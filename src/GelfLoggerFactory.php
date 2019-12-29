@@ -13,6 +13,8 @@ use Monolog\Formatter\GelfMessageFormatter;
 use Monolog\Handler\GelfHandler;
 use Monolog\Logger;
 
+use Hedii\LaravelGelfLogger\Processors\ExtraContextProcessor;
+
 class GelfLoggerFactory
 {
     /**
@@ -70,13 +72,18 @@ class GelfLoggerFactory
             new GelfMessageFormatter(
                 $systemName = $config['system_name'] ?? null,
                 $extraPrefix = null,
-                $contextPrefix = '',
+                $contextPrefix = 'ctxt_',
                 $maxLength = $config['max_length'] ?? null
             )
         );
 
         foreach ($this->parseProcessors($config) as $processor) {
             $handler->pushProcessor(new $processor);
+        }
+
+        if ($config['extra']) {
+            $extraProcessor = ExtraContextProcessor($config);
+            $handler->pushProcessor($extraProcessor);
         }
 
         return new Logger($this->parseChannel($config), [$handler]);
